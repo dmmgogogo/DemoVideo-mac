@@ -127,7 +127,7 @@ struct ContentView: View {
                                 } else {
                                     Image(systemName: "play.circle.fill")
                                         .font(.system(size: 20, weight: .medium))
-                                    Text("播放视频")
+                                    Text("播放")
                                         .font(.system(size: 16, weight: .semibold))
                                 }
                             }
@@ -144,6 +144,7 @@ struct ContentView: View {
                                     .shadow(color: isLoading ? .orange.opacity(0.3) : .blue.opacity(0.3), radius: 8, x: 0, y: 4)
                             )
                         }
+                        .buttonStyle(PlainButtonStyle())
                         .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                         .scaleEffect(isHoveringPlay && !isLoading ? 1.05 : 1.0)
                         .onHover { hovering in
