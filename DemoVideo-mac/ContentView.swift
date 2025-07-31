@@ -18,93 +18,196 @@ struct ContentView: View {
     @State private var alertMessage = ""
     @State private var isLoading = false
     @State private var loadingMessage = "准备播放..."
+    @State private var isHoveringPaste = false
+    @State private var isHoveringPlay = false
     
     var body: some View {
-        VStack(spacing: 16) {
-            Text("M3U8 视频播放器")
-                .font(.title)
-                .fontWeight(.bold)
-                .padding(.top)
+        ZStack {
+            // 背景渐变
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.95, green: 0.97, blue: 1.0),
+                    Color(red: 0.98, green: 0.99, blue: 1.0)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            // URL输入框和复制按钮
-            TextEditor(text: $urlText)
-                .frame(height: 300)
-                .frame(maxWidth: 600)
-                .padding(8)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(8)
-                .font(.system(size: 14))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary, lineWidth: 1)
-                )
-                .overlay(alignment: .topLeading) {
-                    if urlText.isEmpty {
-                        Text("请输入或粘贴M3U8链接")
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 16)
-                            .allowsHitTesting(false)
-                    }
-                }
-            
-            VStack(spacing: 12) {
-                Button(action: copyFromClipboard) {
+            VStack(spacing: 0) {
+                // 顶部标题区域
+                VStack(spacing: 8) {
                     HStack {
-                        Image(systemName: "doc.on.clipboard")
-                        Text("从剪切板粘贴")
-                    }
-                    .foregroundColor(.blue)
-                    .font(.system(size: 14))
-                    .frame(maxWidth: 200)
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                Button(action: {
-                    print("🎯 播放按钮被点击")
-                    print("🎯 点击前isLoading状态: \(isLoading)")
-                    playVideo()
-                    print("🎯 点击后isLoading状态: \(isLoading)")
-                }) {
-                    HStack {
-                        if isLoading {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            Text(loadingMessage)
-                                .fontWeight(.medium)
-                        } else {
-                            Image(systemName: "play.circle.fill")
-                                .font(.title2)
-                            Text("播放视频")
-                                .fontWeight(.medium)
+                        Image(systemName: "play.tv.fill")
+                            .font(.system(size: 32, weight: .medium))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.blue, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("M3U8 视频播放器")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.primary)
+                            
+                            Text("流畅播放，简洁体验")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.secondary)
                         }
                     }
-                    .padding()
-                    .frame(maxWidth: 200)
-                    .background(isLoading ? Color.orange : Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .opacity(isLoading ? 0.8 : 1.0)
+                    .padding(.top, 40)
+                    .padding(.bottom, 20)
                 }
-                .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
-                .onChange(of: isLoading) { oldValue, newValue in
-                    print("🎯 isLoading状态变化: \(newValue)")
+                
+                // 主要内容区域
+                VStack(spacing: 24) {
+                    // URL输入卡片
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Image(systemName: "link")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.blue)
+                            Text("视频链接")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.primary)
+                        }
+                        
+                        ZStack(alignment: .topLeading) {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(NSColor.controlBackgroundColor))
+                                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                            
+                            TextEditor(text: $urlText)
+                                .font(.system(size: 14))
+                                .padding(16)
+                                .background(Color.clear)
+                                .scrollContentBackground(.hidden)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            urlText.isEmpty ? Color.gray.opacity(0.3) : Color.blue.opacity(0.3),
+                                            lineWidth: 1
+                                        )
+                                )
+                            
+                            if urlText.isEmpty {
+                                Text("请输入或粘贴M3U8视频链接")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 20)
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                        .frame(height: 160)
+                        .frame(maxWidth: 500)
+                    }
+                    
+                    // 操作按钮区域
+                    HStack(spacing: 20) {
+                        Spacer()
+                        
+                        // 播放按钮（居中）
+                        Button(action: {
+                            print("🎯 播放按钮被点击")
+                            print("🎯 点击前isLoading状态: \(isLoading)")
+                            playVideo()
+                            print("🎯 点击后isLoading状态: \(isLoading)")
+                        }) {
+                            HStack(spacing: 12) {
+                                if isLoading {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    Text(loadingMessage)
+                                        .font(.system(size: 16, weight: .semibold))
+                                } else {
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.system(size: 20, weight: .medium))
+                                    Text("播放视频")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 32)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(
+                                        isLoading ? 
+                                        LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing) :
+                                        LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
+                                    )
+                                    .shadow(color: isLoading ? .orange.opacity(0.3) : .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                            )
+                        }
+                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                        .scaleEffect(isHoveringPlay && !isLoading ? 1.05 : 1.0)
+                        .onHover { hovering in
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isHoveringPlay = hovering
+                            }
+                        }
+                        .onChange(of: isLoading) { oldValue, newValue in
+                            print("🎯 isLoading状态变化: \(newValue)")
+                        }
+                        
+                        // 粘贴按钮（靠右，更小）
+                        Button(action: copyFromClipboard) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "doc.on.clipboard")
+                                    .font(.system(size: 14, weight: .medium))
+                                Text("从剪切板粘贴")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundColor(isHoveringPaste ? .white : .blue)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(isHoveringPaste ? Color.blue : Color.blue.opacity(0.1))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isHoveringPaste = hovering
+                            }
+                        }
+                        
+                        Spacer()
+                    }
                 }
+                .padding(.horizontal, 40)
+                
+                Spacer()
+                
+                // 底部信息
+                VStack(spacing: 4) {
+                    Text("支持 M3U8 格式视频流")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                    
+                    Text("确保网络连接稳定以获得最佳播放体验")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary.opacity(0.8))
+                }
+                .padding(.bottom, 30)
             }
-            .frame(maxWidth: .infinity)
-            .multilineTextAlignment(.center)
-            
-            Spacer()
         }
-        .frame(minWidth: 400, minHeight: 500)
+        .frame(minWidth: 500, minHeight: 600)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
-        .multilineTextAlignment(.leading)
         .sheet(isPresented: $showingPlayer) {
             if let player = player {
                 VideoPlayerView(player: player, isPresented: $showingPlayer)
-                    .frame(width: 800, height: 500)
+                    .frame(width: 900, height: 600)
             }
         }
         .alert("提示", isPresented: $showAlert) {
@@ -367,40 +470,123 @@ struct VideoPlayerView: View {
     let player: AVPlayer
     @Binding var isPresented: Bool
     @State private var showControls = true
+    @State private var isHoveringClose = false
+    @State private var isHoveringFullscreen = false
     
     var body: some View {
         ZStack {
+            // 背景
             Color.black
                 .ignoresSafeArea()
             
+            // 视频播放器
             VideoPlayer(player: player)
                 .ignoresSafeArea()
             
+            // 控制界面
             if showControls {
                 VStack {
+                    // 顶部控制栏
                     HStack {
                         Spacer()
-                        Button("完成") {
+                        
+                        // 全屏按钮
+                        Button(action: {
+                            // 全屏功能可以在这里实现
+                        }) {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(
+                                    Circle()
+                                        .fill(isHoveringFullscreen ? Color.white.opacity(0.3) : Color.black.opacity(0.6))
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isHoveringFullscreen = hovering
+                            }
+                        }
+                        
+                        // 关闭按钮
+                        Button(action: {
                             cleanup()
                             isPresented = false
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(
+                                    Circle()
+                                        .fill(isHoveringClose ? Color.white.opacity(0.3) : Color.black.opacity(0.6))
+                                )
                         }
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.7))
-                        .cornerRadius(8)
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isHoveringClose = hovering
+                            }
+                        }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    
                     Spacer()
+                    
+                    // 底部控制栏
+                    HStack {
+                        Spacer()
+                        
+                        // 播放/暂停按钮
+                        Button(action: {
+                            if player.rate == 0 {
+                                player.play()
+                            } else {
+                                player.pause()
+                            }
+                        }) {
+                            Image(systemName: player.rate == 0 ? "play.fill" : "pause.fill")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(
+                                    Circle()
+                                        .fill(Color.black.opacity(0.6))
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Spacer()
+                    }
+                    .padding(.bottom, 30)
                 }
-                .padding()
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.4),
+                            Color.clear,
+                            Color.black.opacity(0.4)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             }
         }
         .onTapGesture {
-            showControls.toggle()
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showControls.toggle()
+            }
         }
         .onAppear {
             // 控制栏3秒后自动隐藏
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                showControls = false
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showControls = false
+                }
             }
         }
         .onDisappear {
